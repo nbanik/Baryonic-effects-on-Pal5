@@ -26,7 +26,7 @@ def radec_to_pal5xieta(ra,dec,degree=False):
     phi1= numpy.arctan2(phiXYZ[1],phiXYZ[0])
     return numpy.array([phi1,phi2]).T
 
-def setup_pal5model(leading=False,
+def setup_pal5model(leading=False,pot=MWPotential2014,
                     timpact=None,
                     hernquist=True,
                     age=5.,
@@ -36,7 +36,7 @@ def setup_pal5model(leading=False,
     obs= Orbit([229.018,-0.124,23.2,-2.296,-2.257,-58.7],
                radec=True,ro=R0,vo=V0,
                solarmotion=[-11.1,24.,7.25])
-    aAI= actionAngleIsochroneApprox(pot=MWPotential2014,b=0.8)
+    aAI= actionAngleIsochroneApprox(pot=pot,b=0.8)
     sigv= 0.5*(5./age) #km/s, adjust for diff. age
     if timpact is None:
         sdf= streamdf(sigv/V0,progenitor=obs,
@@ -48,7 +48,7 @@ def setup_pal5model(leading=False,
                       custom_transform=_TPAL5)
     elif singleImpact:
         sdf= streamgapdf(sigv/V0,progenitor=obs,
-                         pot=MWPotential2014,aA=aAI,
+                         pot=pot,aA=aAI,
                          leading=leading,nTrackChunks=11,
                          tdisrupt=age/bovy_conversion.time_in_Gyr(V0,R0),
                          Rnorm=R0,Vnorm=V0,R0=R0,
@@ -59,7 +59,7 @@ def setup_pal5model(leading=False,
                          hernquist=hernquist,**kwargs)
     else:
         sdf= streampepperdf(sigv/V0,progenitor=obs,
-                            pot=MWPotential2014,aA=aAI,
+                            pot=pot,aA=aAI,
                             leading=leading,nTrackChunks=101,
                             tdisrupt=age/bovy_conversion.time_in_Gyr(V0,R0),
                             Rnorm=R0,Vnorm=V0,R0=R0,
