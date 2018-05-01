@@ -40,7 +40,7 @@ def setup_pal5model(leading=False,pot=MWPotential2014,
     sigv= 0.5*(5./age) #km/s, adjust for diff. age
     if timpact is None:
         sdf= streamdf(sigv/V0,progenitor=obs,
-                      pot=MWPotential2014,aA=aAI,
+                      pot=pot,aA=aAI,
                       leading=leading,nTrackChunks=11,
                       tdisrupt=age/bovy_conversion.time_in_Gyr(V0,R0),
                       Rnorm=R0,Vnorm=V0,R0=R0,
