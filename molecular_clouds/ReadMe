@@ -1,0 +1,123 @@
+J/ApJ/834/57  Milky Way molecular clouds from ^12^CO  (Miville-Deschenes+, 2017)
+================================================================================
+Physical properties of molecular clouds for the entire Milky Way disk.
+    Miville-Deschenes M.-A., Murray N., Lee E.J.
+   <Astrophys. J., 834, 57-57 (2017)>
+   =2017ApJ...834...57M    (SIMBAD/NED BibCode)
+================================================================================
+ADC_Keywords: Molecular clouds ; Carbon monoxide ; Galactic plane ;
+              Interstellar medium
+Keywords: Galaxy: general; ISM: clouds; ISM: general;
+          ISM: kinematics and dynamics; methods: data analysis; turbulence
+
+Abstract:
+    This study presents a catalog of 8107 molecular clouds that covers the
+    entire Galactic plane and includes 98% of the ^12^CO emission observed
+    within b+/-5^{deg}^. The catalog was produced using a hierarchical
+    cluster identification method applied to the result of a Gaussian
+    decomposition of the Dame+ (2001ApJ...547..792D) data. The total H_2_
+    mass in the catalog is 1.2x10^9^M_{sun}_, in agreement with previous
+    estimates. We find that 30% of the sight lines intersect only a single
+    cloud, with another 25% intersecting only two clouds. The most
+    probable cloud size is R~30pc. We find that M{propto}R^2.2+/-0.2^,
+    with no correlation between the cloud surface density, {Sigma}, and R.
+    In contrast with the general idea, we find a rather large range of
+    values of {Sigma}, from 2 to 300M_{sun}_/pc^2^, and a systematic
+    decrease with increasing Galactic radius, R_gal_. The cloud velocity
+    dispersion and the normalization {sigma}_0_={sigma}_v_/R^1/2^ both
+    decrease systematically with R_gal_. When studied over the whole
+    Galactic disk, there is a large dispersion in the line width-size
+    relation and a significantly better correlation between {sigma}_v_ and
+    {Sigma}R. The normalization of this correlation is constant to better
+    than a factor of two for R_gal_<20kpc. This relation is used to
+    disentangle the ambiguity between near and far kinematic distances. We
+    report a strong variation of the turbulent energy injection rate. In
+    the outer Galaxy it may be maintained by accretion through the disk
+    and/or onto the clouds, but neither source can drive the 100 times
+    higher cloud-averaged injection rate in the inner Galaxy.
+
+Description:
+    The data set used here is that of Dame+ (2001ApJ...547..792D). Those
+    authors combined observations obtained over a period of 20yr with two
+    telescopes, one in the north (first located in New York City and then
+    in Cambridge, Massachusetts) and one in the south (Cerro Tololo,
+    Chile). These 1.2m telescopes have an angular resolution of ~8.5' at
+    115GHz, the frequency of the ^12^CO 1-0 line. For the current study we
+    used the data set covering the whole Galactic plane with +/-5{deg} in
+    Galactic latitude.
+
+File Summary:
+--------------------------------------------------------------------------------
+ FileName      Lrecl  Records   Explanations
+--------------------------------------------------------------------------------
+ReadMe            80        .   This file
+table1.dat       345     8107   The molecular clouds catalog
+--------------------------------------------------------------------------------
+
+See also:
+ VIII/39 : Composite CO Survey of the Milky Way (Dame+ 1987)
+ J/ApJ/833/229  : Star forming cloud-GMC complexes (Lee+, 2016)
+ J/A+A/590/A131 : Giant molecular filaments in the MW (Abreu-Vicente+, 2016)
+ J/ApJ/738/27   : Galactic HII regions RRL and continuum data (Balser+, 2011)
+ J/ApJ/734/65   : CI radial velocities with HST/STIS (Jenkins+, 2011)
+ J/ApJ/723/492  : Properties of GRS molecular clouds (Roman-Duval+, 2010)
+ J/ApJS/184/1   : Molecular clouds in the LMC by NANTEN. II. (Kawamura+, 2009)
+ J/ApJ/699/1153 : Kinematic dist. to GRS molecular clouds (Roman-Duval+, 2009)
+ J/ApJ/699/1092 : Giant molecular clouds (SRBY) (Heyer+, 2009)
+ J/ApJS/182/131 : Molecular clouds and clumps in the GRS (Rathborne+, 2009)
+ J/ApJ/686/948  : CO in extragalactic giant molecular clouds (Bolatto+, 2008)
+ J/ApJS/144/47  : Outer galaxy molecular cloud catalog (Brunt+, 2003)
+ J/ApJ/582/756  : Velocities of HII regions (Kolpak+, 2003)
+ J/ApJ/551/852  : FCRAO CO survey of the outer Galaxy (Heyer+, 2001)
+ J/A+A/275/67   : Velocity Field of the outer Galaxy (Brand+ 1993)
+ http://www.cfa.harvard.edu/rtdc/CO/ : CO data online archive
+
+Byte-by-byte Description of file: table1.dat
+--------------------------------------------------------------------------------
+   Bytes Format Units      Label  Explanations
+--------------------------------------------------------------------------------
+   1-  4 I4     ---        Cloud  [1/8107] Cloud number
+   6-  8 I3     ---        Ncomp  [5/600] Number of Gaussian components
+  10- 12 I3     ---        Npix   [5/444] Number of pixels on the sky
+  14- 25 E12.6  deg2       Area   [0.07/7] Angular area
+  27- 39 E13.6  deg        GLON   [-179/180] Baricentric Galactic longitude
+  41- 52 E12.6  deg        Sigb   [0.1/1.5] Standard deviation in GLON
+                                   ({sigma}_l_)
+  54- 66 E13.6  deg        GLAT   [-5.2/5] Baricentric Galactic latitude
+  68- 79 E12.6  deg        Sigl   [0.1/1.2] Standard deviation in GLAT
+                                   ({sigma}_b_)
+  81- 93 E13.6  deg        theta  ?=0 Angle with respect to b=0
+  95-106 E12.6  K.km/s     WCO    [2/13929] Integrated CO emission
+ 108-119 E12.6  cm-2       NH2    Average column density
+ 121-132 E12.6  Msun/pc2   Sigma  [1.8/739] Surface density
+ 134-146 E13.6  km/s       Vcent  [-188/185] Centroid velocity
+ 148-159 E12.6  km/s       SigV   [0.09/17] Velocity standard deviation
+                                   ({sigma}_V_)
+ 161-172 E12.6  deg        Rmax   [0.1/3] Largest eigenvalue of the
+                                   inertia matrix
+ 174-185 E12.6  deg        Rmin   [0.1/1.5] Smallest eigenvalue of the
+                                   inertia matrix
+ 187-198 E12.6  deg        Rang   [0.1/1.7] Angular size
+ 200-211 E12.6  kpc        Rgal   [0.003/97] Galacto-centric radius
+     213 I1     ---        INF    Near or far distance flag (0=near; 1=far) (1)
+ 215-226 E12.6  kpc        Dnear  [0.001/88.5] Near kinematic distance
+ 228-239 E12.6  kpc        Dfar   [0.01/88.5] Far kinematic distance
+ 241-253 E13.6  kpc        znear  [-2.8/1.6] Near distance to Galactic mid-plane
+ 255-267 E13.6  kpc        zfar   [-2.8/1.6] Far distance to Galactic mid-plane
+ 269-280 E12.6  pc2        Snear  [/744960] Near derived physical area
+ 282-293 E12.6  pc2        Sfar   [0.003/744960] Far derived physical area
+ 295-306 E12.6  pc         Rnear  [0.008/470] Near derived physical size
+ 308-319 E12.6  pc         Rfar   [0.03/470] Far derived physical size
+ 321-332 E12.6  Msun       Mnear  [0.0003/] Near derived mass
+ 334-345 E12.6  Msun       Mfar   [0.01/] Far derived mass
+--------------------------------------------------------------------------------
+Note (1): The index I_NF_ gives an estimate of which distance is more likely
+          based on the {sigma}_v_-{Sigma}R relation
+          ({sigma}_v_=0.23({Sigma}R)^0.43+/-0.14^; Eq. 26).
+--------------------------------------------------------------------------------
+
+History:
+    From electronic version of the journal
+
+================================================================================
+(End)                  Prepared by [AAS], Emmanuelle Perret [CDS]    04-May-2017
