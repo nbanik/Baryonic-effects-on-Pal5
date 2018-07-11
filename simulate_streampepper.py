@@ -112,10 +112,10 @@ def run_simulations(sdf_pepper,sdf_smooth,options):
     if os.path.exists(options.outdens):
         # First read the file to check apar
         apar_file= numpy.genfromtxt(options.outdens,delimiter=',',max_rows=1)
-        print numpy.amax(numpy.fabs(apar_file-apar))
+        print (numpy.amax(numpy.fabs(apar_file-apar)))
         assert numpy.amax(numpy.fabs(apar_file-apar)) < 10.**-5., 'apar according to options does not correspond to apar already in outdens'
         apar_file= numpy.genfromtxt(options.outomega,delimiter=',',max_rows=1)
-        print numpy.amax(numpy.fabs(apar_file-apar))
+        print (numpy.amax(numpy.fabs(apar_file-apar)))
         assert numpy.amax(numpy.fabs(apar_file-apar)) < 10.**-5., 'apar according to options does not correspond to apar already in outomega'
         csvdens= open(options.outdens,'a')
         csvomega= open(options.outomega,'a')       
@@ -177,7 +177,7 @@ def run_simulations(sdf_pepper,sdf_smooth,options):
                                   /integrate.quad(lambda x: x**-1.5,
                                                   10.**massrange[0],
                                                   10.**massrange[1])[0]
-    print "Using an overall rate of %f" % rate
+    print ("Using an overall rate of %f" % rate)
     sample_rs= lambda x: rs(x*bovy_conversion.mass_in_1010msol(V0,R0)*10.**10.,
                             plummer=options.plummer,rsfac=options.rsfac)
     # Simulate
