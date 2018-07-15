@@ -40,6 +40,15 @@ q= 0.6
 
 Mbar=10**10 #Msun, half of what Wang is using, same as Pearson
 
+def tform_from_t_on(t_on=2.,pat_speed=40.,tgrow=2):
+        
+    omegaP=pat_speed*(ro/vo)    
+    Tbar=2.*np.pi/omegaP #bar period in galpy units.
+    t_on=t_on/bovy_conversion.time_in_Gyr(vo,ro)
+    tsteady=tgrow*Tbar
+    tform = t_on + tsteady
+    return tform #in galpy units
+
 
 def rho1(R,z):
     return (2.*np.pi*x0*y0)*R*np.exp(-0.5*(np.sqrt(R**4 + (z/z0)**4)))
