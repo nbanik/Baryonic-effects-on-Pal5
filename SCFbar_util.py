@@ -255,7 +255,7 @@ def MWPotentialSCFbar_invert(mbar,Acos,Asin,rs=1.,normalize=False,pat_speed=40.,
     
 
 
-def sample_perturbed_Pal5(N,barpot,barpot_invert,nobarpot,dir='',trailing=True,tpal5age=5.,t_on=2.,tgrow=2,pat_speed=40.):
+def sample_perturbed_Pal5(N,barpot,barpot_invert,nobarpot,fo='blah_trailing.dat',trailing=True,tpal5age=5.,t_on=2.,tgrow=2,pat_speed=40.):
     #Sample N points from the smooth model today 
     
     tpal5age=tpal5age/bovy_conversion.time_in_Gyr(220.,8.)
@@ -264,12 +264,13 @@ def sample_perturbed_Pal5(N,barpot,barpot_invert,nobarpot,dir='',trailing=True,t
           sdf_trailing= pal5_util.setup_pal5model(pot=nobarpot)
    
           R,vR,vT,z,vz,phi,dt= sdf_trailing.sample(n=N,returndt=True)
-          fo=open(dir + 'sample_trailing_{}_perturbed_Pal5_{}Gyrbar_{}barperiod_{}pat_speed.dat'.format(N,t_on,tgrow,pat_speed),'w')
+          fo=open(fo,'w')
         
     else :
           sdf_leading= pal5_util.setup_pal5model(pot=nobarpot,leading=True)
           R,vR,vT,z,vz,phi,dt= sdf_leading.sample(n=N,returndt=True)
-          fo=open(dir + 'sample_leading_{}_perturbed_Pal5_{}Gyrbar_{}barperiod_{}pat_speed.dat'.format(N,t_on,tgrow,pat_speed),'w')
+          fo_lead=fo.replace('trailing','leading')
+          fo=open(fo_lead,'w')
         
         
     finalR= numpy.empty(N)
@@ -281,6 +282,7 @@ def sample_perturbed_Pal5(N,barpot,barpot_invert,nobarpot,dir='',trailing=True,t
     tt=numpy.empty(N)
 
     tform = tform_from_t_on(t_on=t_on,pat_speed=pat_speed,tgrow=tgrow) #in galpy
+    t_on=t_on/bovy_conversion.time_in_Gyr(220.,8.)
 
     for ii in range(N):
         
@@ -293,7 +295,7 @@ def sample_perturbed_Pal5(N,barpot,barpot_invert,nobarpot,dir='',trailing=True,t
         o.integrate(ts,nobarpot)
         unp_orb=o(ts[-1]).flip()._orb.vxvv
         
-        if dt[ii] <= tform :
+        if dt[ii] <= t_on :
         
         #integrate Pal 5 progenitor in barpot back from today until the stripping time
             pal5_bar= Orbit([229.018,-0.124,23.2,-2.296,-2.257,-58.7],radec=True,solarmotion=[-11.1,24.,7.25]).flip() 
