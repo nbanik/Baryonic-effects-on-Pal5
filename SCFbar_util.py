@@ -272,7 +272,18 @@ def sample_perturbed_Pal5(N,barpot,barpot_invert,nobarpot,fo='blah_trailing.dat'
           fo_lead=fo.replace('trailing','leading')
           fo=open(fo_lead,'w')
         
-        
+    tage=numpy.linspace(0.,tpal5age,1001)
+    
+    #integrate Pal 5 progenitor in barpot all the way back to 5 Gyrs, 
+    #from this orbits will be extracted by interpolation in the for loop
+    pal5_bar= Orbit([229.018,-0.124,23.2,-2.296,-2.257,-58.7],radec=True,solarmotion=[-11.1,24.,7.25]).flip() 
+    pal5_bar.integrate(tage,barpot_invert)
+    
+    #integrate Pal 5 progenitor in nobarpot all the way back to 5 Gyrs, 
+    #from this orbits will be extracted by interpolation in the for loop   
+    pal5_nobar= Orbit([229.018,-0.124,23.2,-2.296,-2.257,-58.7],radec=True,solarmotion=[-11.1,24.,7.25]).flip() 
+    pal5_nobar.integrate(tage,nobarpot)
+    
     finalR= numpy.empty(N)
     finalvR=numpy.empty(N)
     finalvT=numpy.empty(N)
@@ -295,32 +306,15 @@ def sample_perturbed_Pal5(N,barpot,barpot_invert,nobarpot,fo='blah_trailing.dat'
         o.integrate(ts,nobarpot)
         unp_orb=o(ts[-1]).flip()._orb.vxvv
         
-        if dt[ii] <= t_on :
+        #extract the orbit at the stripping time from the above integrated orbit
+        pal5_orb_bar = pal5_bar(ts[-1]).flip()._orb.vxvv
+        pal5_orb_nobar = pal5_nobar(ts[-1]).flip()._orb.vxvv
+          
+        #subtract Pal 5 orb in nobarpot and add Pal 5 orbit in barpot
+        pert_orb=(np.array(unp_orb) - np.array(pal5_orb_nobar)) + np.array(pal5_orb_bar)
+        pert_orb=Orbit(list(pert_orb))
         
-        #integrate Pal 5 progenitor in barpot back from today until the stripping time
-            pal5_bar= Orbit([229.018,-0.124,23.2,-2.296,-2.257,-58.7],radec=True,solarmotion=[-11.1,24.,7.25]).flip() 
-            pal5_bar.integrate(ts,barpot_invert)
-    
-            #flip to get correct orbit
-            pal5_orb_bar=pal5_bar(ts[-1]).flip()._orb.vxvv
-            
-            #integrate Pal 5 progenitor in nobarpot back from today until the stripping time    
-            pal5_nobar= Orbit([229.018,-0.124,23.2,-2.296,-2.257,-58.7],radec=True,solarmotion=[-11.1,24.,7.25]).flip() 
-            pal5_nobar.integrate(ts,nobarpot)
-    
-            #flip again to get correct velocity of the progenitor
-            pal5_orb_nobar=pal5_nobar(ts[-1]).flip()._orb.vxvv
         
-            #subtract Pal 5 orb in nobarpot and add Pal 5 orbit in barpot
-            pert_orb=(np.array(unp_orb) - np.array(pal5_orb_nobar)) + np.array(pal5_orb_bar)
-            pert_orb=Orbit(list(pert_orb))
-        
-        else : 
-        
-            pert_orb = Orbit(unp_orb)
-     
-        
-    
         #forward integrate in barred potential
         pert_orb.integrate(ts_future,barpot)
         finalR[ii]= pert_orb.R(ts_future[-1])
