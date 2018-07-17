@@ -255,7 +255,7 @@ def MWPotentialSCFbar_invert(mbar,Acos,Asin,rs=1.,normalize=False,pat_speed=40.,
     
 
 
-def sample_perturbed_Pal5(N,barpot,barpot_invert,nobarpot,fo='blah_trailing.dat',trailing=True,tpal5age=5.,t_on=2.,tgrow=2,pat_speed=40.):
+def sample_perturbed_Pal5(N,barpot,barpot_invert,nobarpot,prog_barpot,prog_barpot_invert,prog_nobarpot,fo='blah_trailing.dat',trailing=True,tpal5age=5.,t_on=2.,tgrow=2,pat_speed=40.):
     #Sample N points from the smooth model today 
     
     tpal5age=tpal5age/bovy_conversion.time_in_Gyr(220.,8.)
@@ -277,13 +277,13 @@ def sample_perturbed_Pal5(N,barpot,barpot_invert,nobarpot,fo='blah_trailing.dat'
     #integrate Pal 5 progenitor in barpot all the way back to 5 Gyrs, 
     #from this orbits will be extracted by interpolation in the for loop
     pal5_bar= Orbit([229.018,-0.124,23.2,-2.296,-2.257,-58.7],radec=True,solarmotion=[-11.1,24.,7.25]).flip() 
-    #pal5_bar.integrate(tage,barpot_invert)
-    pal5_bar.integrate(tage,nobarpot)
+    pal5_bar.integrate(tage,prog_barpot_invert)
     
+            
     #integrate Pal 5 progenitor in nobarpot all the way back to 5 Gyrs, 
     #from this orbits will be extracted by interpolation in the for loop   
     pal5_nobar= Orbit([229.018,-0.124,23.2,-2.296,-2.257,-58.7],radec=True,solarmotion=[-11.1,24.,7.25]).flip() 
-    pal5_nobar.integrate(tage,nobarpot)
+    pal5_nobar.integrate(tage,prog_nobarpot)
     
     pal5_bar.turn_physical_off()
     pal5_nobar.turn_physical_off()
@@ -329,6 +329,8 @@ def sample_perturbed_Pal5(N,barpot,barpot_invert,nobarpot,fo='blah_trailing.dat'
         
         pert_orb= unp_orb - pal5_orb_nobar + pal5_orb_bar
         
+        print (unp_orb,dt[ii])
+        print (pert_orb,dt[ii])
         #(R,phi,Z)
         #vR,vT,vz
         #vxvv=[R,vR,vT,z,vz,phi]
