@@ -277,12 +277,16 @@ def sample_perturbed_Pal5(N,barpot,barpot_invert,nobarpot,fo='blah_trailing.dat'
     #integrate Pal 5 progenitor in barpot all the way back to 5 Gyrs, 
     #from this orbits will be extracted by interpolation in the for loop
     pal5_bar= Orbit([229.018,-0.124,23.2,-2.296,-2.257,-58.7],radec=True,solarmotion=[-11.1,24.,7.25]).flip() 
-    pal5_bar.integrate(tage,barpot_invert)
+    #pal5_bar.integrate(tage,barpot_invert)
+    pal5_bar.integrate(tage,nobarpot)
     
     #integrate Pal 5 progenitor in nobarpot all the way back to 5 Gyrs, 
     #from this orbits will be extracted by interpolation in the for loop   
     pal5_nobar= Orbit([229.018,-0.124,23.2,-2.296,-2.257,-58.7],radec=True,solarmotion=[-11.1,24.,7.25]).flip() 
     pal5_nobar.integrate(tage,nobarpot)
+    
+    pal5_bar.turn_physical_off()
+    pal5_nobar.turn_physical_off()
     
     finalR= numpy.empty(N)
     finalvR=numpy.empty(N)
@@ -298,21 +302,39 @@ def sample_perturbed_Pal5(N,barpot,barpot_invert,nobarpot,fo='blah_trailing.dat'
     for ii in range(N):
         
         o= Orbit([R[ii],vR[ii],vT[ii],z[ii],vz[ii],phi[ii]]).flip() # flip flips the velocities for backwards integration
+        o.turn_physical_off()
         ts= numpy.linspace(0.,dt[ii],1001)
     
         #for integrating in barpot, time starts 5 Gyrs in the past and goes forward
         ts_future= numpy.linspace(tpal5age - dt[ii],tpal5age,1001)
     
         o.integrate(ts,nobarpot)
-        unp_orb=o(ts[-1]).flip()._orb.vxvv
+        #unp_orb=o(ts[-1]).flip()._orb.vxvv
         
         #extract the orbit at the stripping time from the above integrated orbit
-        pal5_orb_bar = pal5_bar(ts[-1]).flip()._orb.vxvv
-        pal5_orb_nobar = pal5_nobar(ts[-1]).flip()._orb.vxvv
-          
+        #pal5_orb_bar = pal5_bar(ts[-1]).flip()._orb.vxvv
+        #pal5_orb_nobar = pal5_nobar(ts[-1]).flip()._orb.vxvv
+        
+        unp_orb=numpy.array([o.x(ts[-1]),o.y(ts[-1]),o.z(ts[-1]),-o.vx(ts[-1]),-o.vy(ts[-1]),-o.vz(ts[-1])])
+        pal5_orb_bar= numpy.array([pal5_bar.x(ts[-1]),pal5_bar.y(ts[-1]),pal5_bar.z(ts[-1]),-pal5_bar.vx(ts[-1]),-pal5_bar.vy(ts[-1]),-pal5_bar.vz(ts[-1])])
+        pal5_orb_nobar= numpy.array([pal5_nobar.x(ts[-1]),pal5_nobar.y(ts[-1]),pal5_nobar.z(ts[-1]),-pal5_nobar.vx(ts[-1]),-pal5_nobar.vy(ts[-1]),-pal5_nobar.vz(ts[-1])])
+        
+        #print (unp_orb)
+        #print (pal5_orb_bar)  
+        #print (pal5_orb_nobar)
+              
         #subtract Pal 5 orb in nobarpot and add Pal 5 orbit in barpot
-        pert_orb=(np.array(unp_orb) - np.array(pal5_orb_nobar)) + np.array(pal5_orb_bar)
-        pert_orb=Orbit(list(pert_orb))
+        #pert_orb=(np.array(unp_orb) - np.array(pal5_orb_nobar)) + np.array(pal5_orb_bar)
+        #pert_orb=Orbit(list(pert_orb))
+        
+        pert_orb= unp_orb - pal5_orb_nobar + pal5_orb_bar
+        
+        #(R,phi,Z)
+        #vR,vT,vz
+        #vxvv=[R,vR,vT,z,vz,phi]
+        pert_orb_RpZ= bovy_coords.rect_to_cyl(pert_orb[0],pert_orb[1],pert_orb[2])
+        pert_orb_vRpZ= bovy_coords.rect_to_cyl_vec(pert_orb[3],pert_orb[4],pert_orb[5],pert_orb[0],pert_orb[1],pert_orb[2])
+        pert_orb=Orbit([pert_orb_RpZ[0],pert_orb_vRpZ[0],pert_orb_vRpZ[1],pert_orb_RpZ[2],pert_orb_vRpZ[2],pert_orb_RpZ[1]])
         
         
         #forward integrate in barred potential
