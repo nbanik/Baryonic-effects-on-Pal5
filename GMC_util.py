@@ -51,20 +51,25 @@ def add_MCs(Mmin=10**6.,vo=vo,ro=ro):
         if flag[ii] == 0 :
             D_all[ii]=Dnear[ii]
             zfile[ii]=znear[ii]
-            rs_all[ii]=Rnear[ii]*0.001  #convert to kpc
+            #rs_all[ii]=Rnear[ii]*0.001  #convert to kpc
             M_all[ii]=Mnear[ii]
         
         
         else :
             D_all[ii]=Dfar[ii]
             zfile[ii]=zfar[ii]
-            rs_all[ii]=Rfar[ii]*0.001 #convert to kpc
+            #rs_all[ii]=Rfar[ii]*0.001 #convert to kpc
             M_all[ii]=Mfar[ii]
-        
-        
+    
 
+    R_all,phi_all,z_all= lbd_to_galcencyl(l,b,D_all*(8.5/8.))
+    
+    def rs(M):
+        return 0.1*(M/10**7.)**0.5
 
-    R_all,phi_all,z_all= lbd_to_galcencyl(l,b,D_all)
+    for ii in range(len(M_all)):
+        rs_all[ii]=rs(M_all[ii])
+
 
     R_all/=ro
     z_all/=ro
@@ -190,10 +195,10 @@ def aparxv_stream(sdf_smooth,sdf_pepper):
     return (apar_full,x_full,y_full,z_full,vx_full,vy_full,vz_full)
     
 
-def aparxv_stream_multiple_pkl(sampling=256,nchunks=16):
+def aparxv_stream_from_pkl(sampling=256,nchunks=16):
     
     '''
-    compute apar,x,v from mutiple pickle files
+    compute apar,x,v from one or multiple pickle files
     '''
     
     apar=[]
@@ -207,24 +212,44 @@ def aparxv_stream_multiple_pkl(sampling=256,nchunks=16):
     
     sdf_smooth= pal5_util.setup_pal5model()
     
-    for i in range(nchunks):
-        with open('pkl_files/pal5pepper_{}sampling_MW2014_{}.pkl'.format(sampling,i),'rb') as savefile:
-               
-                sdf_pepper= pickle.load(savefile,encoding='latin1')
-                ap,x,y,z,vx,vy,vz= aparxv_stream(sdf_smooth,sdf_pepper)
-                apar.extend(ap)
-                x_stream.extend(x)
-                y_stream.extend(y)
-                z_stream.extend(z)
-                vx_stream.extend(vx)
-                vy_stream.extend(vy)
-                vz_stream.extend(vz)
-                timpact.extend(sdf_pepper._timpact)
+    if nchunks > 1 :
+        
+        for i in range(nchunks):
+            with open('pkl_files/pal5pepper_{}sampling_MW2014_{}.pkl'.format(sampling,i),'rb') as savefile:
+                    
+                    print (sampling,i)
+
+                    sdf_pepper= pickle.load(savefile,encoding='latin1')
+                    ap,x,y,z,vx,vy,vz= aparxv_stream(sdf_smooth,sdf_pepper)
+                    apar.extend(ap)
+                    x_stream.extend(x)
+                    y_stream.extend(y)
+                    z_stream.extend(z)
+                    vx_stream.extend(vx)
+                    vy_stream.extend(vy)
+                    vz_stream.extend(vz)
+                    timpact.extend(sdf_pepper._timpact)
+                    
+    else :
+        
+        with open('pkl_files/pal5pepper_{}sampling_MW2014.pkl'.format(sampling),'rb') as savefile:
+
+                    sdf_pepper= pickle.load(savefile,encoding='latin1')
+                    ap,x,y,z,vx,vy,vz= aparxv_stream(sdf_smooth,sdf_pepper)
+                    apar.extend(ap)
+                    x_stream.extend(x)
+                    y_stream.extend(y)
+                    z_stream.extend(z)
+                    vx_stream.extend(vx)
+                    vy_stream.extend(vy)
+                    vz_stream.extend(vz)
+                    timpact.extend(sdf_pepper._timpact)
+        
                 
     return (timpact,apar,x_stream,y_stream,z_stream,vx_stream,vy_stream,vz_stream)
     
     
-def compute_impact_parameters(timp,a,xs,ys,zs,sampling_low=128,imp_fac=5.,Mmin=10**6.):
+def compute_impact_parameters(timp,a,xs,ys,zs,nchunks=16,sampling_low=128,imp_fac=5.,Mmin=10**6.):
     
     '''
     timp : timpacts
@@ -271,56 +296,80 @@ def compute_impact_parameters(timp,a,xs,ys,zs,sampling_low=128,imp_fac=5.,Mmin=1
     vx_mc=[]
     vy_mc=[]
     vz_mc=[]
-    tmin_low=[]
+    tmin=[]
     rs_mc=[]
     M_mc=[]
     impactMC_ind=[]
 
-
-    with open('pkl_files/pal5pepper_{}sampling_MW2014.pkl'.format(sampling_low),'rb') as savefile:
+    if nchunks > 1 :
+        with open('pkl_files/pal5pepper_{}sampling_MW2014.pkl'.format(sampling_low),'rb') as savefile:
             sdf_pepper_low= pickle.load(savefile,encoding='latin1')
-
-    timpact_low=sdf_pepper_low._timpact
+                
+        timpact_low=sdf_pepper_low._timpact
         
-    c=0
-    for ii in range(len(orbits)):
+        c=0
+        for ii in range(len(orbits)):
 
-        bmax=imp_fac*rs[ii]/ro
+            bmax=imp_fac*rs[ii]/ro
 
-        if min(min_sep_matrix[ii]) <= bmax :
-            c+=1
+            if min(min_sep_matrix[ii]) <= bmax :
+                c+=1
 
-            min_timpact_ind=np.argmin(min_sep_matrix[ii])
-            
-            impactMC_ind.append(ii)
+                min_timpact_ind=np.argmin(min_sep_matrix[ii])
 
-            t_high=timp[min_timpact_ind]
-                        
-            #round t_high to the nearest timpact in the low timpact sampling
-            t_low=timpact_low[np.argmin(np.abs(timpact_low-t_high))]
-            tmin_low.append(t_low)
+                impactMC_ind.append(ii)
 
-            impactb.append(min_sep_matrix[ii,min_timpact_ind])
-            impact_angle.append(apar_matrix[ii,min_timpact_ind]) # _sigMeanSign = -/+ = trail/lead
+                t_high=timp[min_timpact_ind]
 
-            rs_mc.append(rs[ii]/ro)
-            M_mc.append(M[ii]/bovy_conversion.mass_in_msol(vo,ro))
-            #flip velocities
-            vx_mc.append(-orbits[ii].vx(t_high))
-            vy_mc.append(-orbits[ii].vy(t_high))
-            vz_mc.append(-orbits[ii].vz(t_high))
+                #round t_high to the nearest timpact in the low timpact sampling
+                t_low=timpact_low[np.argmin(np.abs(timpact_low-t_high))]
+                tmin.append(t_low)
 
-    #combine vx,vy,vz to v
-    v_mc=np.c_[vx_mc,vy_mc,vz_mc]
-    print ("The stream had %i impacts"%c)
+                impactb.append(min_sep_matrix[ii,min_timpact_ind])
+                impact_angle.append(apar_matrix[ii,min_timpact_ind]) # _sigMeanSign = -/+ = trail/lead
+
+                rs_mc.append(rs[ii]/ro)
+                M_mc.append(M[ii]/bovy_conversion.mass_in_msol(vo,ro))
+                #flip velocities
+                vx_mc.append(-orbits[ii].vx(t_high))
+                vy_mc.append(-orbits[ii].vy(t_high))
+                vz_mc.append(-orbits[ii].vz(t_high))
+
+        #combine vx,vy,vz to v
+        v_mc=np.c_[vx_mc,vy_mc,vz_mc]
+        print ("The stream had %i impacts"%c)
+        
+    else :
+        
+        c=0
+        for ii in range(len(orbits)):
+
+            bmax=imp_fac*rs[ii]/ro
+
+            if min(min_sep_matrix[ii]) <= bmax :
+                c+=1
+
+                min_timpact_ind=np.argmin(min_sep_matrix[ii])
+
+                impactMC_ind.append(ii)
+
+                t_imp_min=timp[min_timpact_ind]
+                tmin.append(t_imp_min)
+
+                impactb.append(min_sep_matrix[ii,min_timpact_ind])
+                impact_angle.append(apar_matrix[ii,min_timpact_ind]) # _sigMeanSign = -/+ = trail/lead
+
+                rs_mc.append(rs[ii]/ro)
+                M_mc.append(M[ii]/bovy_conversion.mass_in_msol(vo,ro))
+                #flip velocities
+                vx_mc.append(-orbits[ii].vx(t_imp_min))
+                vy_mc.append(-orbits[ii].vy(t_imp_min))
+                vz_mc.append(-orbits[ii].vz(t_imp_min))
+
+        #combine vx,vy,vz to v
+        v_mc=np.c_[vx_mc,vy_mc,vz_mc]
+        print ("The stream had %i impacts"%c)
+        
+        
     
-    return (impactMC_ind,M_mc,rs_mc,v_mc,impactb,impact_angle,tmin_low)
-    
-    
-
-    
-
-    
-
-    
-    
+    return (impactMC_ind,M_mc,rs_mc,v_mc,impactb,impact_angle,tmin)
