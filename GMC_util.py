@@ -18,11 +18,12 @@ def lbd_to_galcencyl(l,b,d,degree=True):
     
     return (Rphiz[:,0],Rphiz[:,1],Rphiz[:,2])
 
-def add_MCs(Mmin=10**6.,vo=vo,ro=ro):
+def add_MCs(Mmin=10**6.,rand_rotate=False,vo=vo,ro=ro):
     
     '''
     Setup Molecular clouds and return their
     M,rs,R,vR,vT,z,vz,phi today
+    rand_rotate : if True, add random rotation to phi between [0,2pi]
     '''
     
     hdulist=fits.open('molecular_clouds/J_ApJ_834_57_table1.dat.gz.fits')
@@ -93,6 +94,9 @@ def add_MCs(Mmin=10**6.,vo=vo,ro=ro):
     z=np.array(z)
     R=np.array(R)
     phi=np.array(phi)
+    
+    if rand_rotate :
+        phi+=2*np.pi*np.random.uniform(low=0.,high=1.,size=len(phi))
     
     vT=np.empty(len(M))
 
@@ -249,7 +253,7 @@ def aparxv_stream_from_pkl(sampling=256,nchunks=16):
     return (timpact,apar,x_stream,y_stream,z_stream,vx_stream,vy_stream,vz_stream)
     
     
-def compute_impact_parameters(timp,a,xs,ys,zs,nchunks=16,sampling_low=128,imp_fac=5.,Mmin=10**6.):
+def compute_impact_parameters(timp,a,xs,ys,zs,nchunks=16,sampling_low=128,imp_fac=5.,Mmin=10**6.,rand_rotate=False):
     
     '''
     timp : timpacts
@@ -257,11 +261,12 @@ def compute_impact_parameters(timp,a,xs,ys,zs,nchunks=16,sampling_low=128,imp_fa
     sampling_low : low timpact object on to which the impacts from high timpact case will be set
     imp_fac: X where bmax= X.r_s
     Mmin min mass above which all GMCs will be considered for impact
+    rand_rotate : give the GMCs an ol' shaka shaka along phi
     
     '''
        
     #load the GMCs
-    M,rs,coord=add_MCs(Mmin=Mmin)
+    M,rs,coord=add_MCs(Mmin=Mmin,rand_rotate=rand_rotate)
 
     #integrate their orbits 5 Gyr back,
     t_age= np.linspace(0.,5.,1001)/bovy_conversion.time_in_Gyr(vo,ro)
