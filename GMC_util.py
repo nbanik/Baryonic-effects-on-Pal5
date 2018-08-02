@@ -1,12 +1,17 @@
 import numpy as np
+import numpy
 import pickle
 from astropy.io import fits
 import matplotlib.pyplot as plt
+from galpy.actionAngle import actionAngleIsochroneApprox, estimateBIsochrone
+from galpy.actionAngle import actionAngleTorus
 from galpy.util import bovy_conversion, bovy_coords, save_pickles, bovy_plot
 from galpy.potential import MWPotential2014, turn_physical_off, vcirc
 import astropy.units as u
 from galpy.orbit import Orbit
 import pal5_util
+import pal5_util_MWfit
+import MWPotential2014Likelihood
 
 ro=8.
 #paper on MC used R0=8.5 kpc, using ro=8. as of now.
@@ -17,8 +22,67 @@ def lbd_to_galcencyl(l,b,d,degree=True):
     Rphiz=bovy_coords.XYZ_to_galcencyl(xyz[:,0],xyz[:,1],xyz[:,2],Xsun=1.,Zsun=0.)
     
     return (Rphiz[:,0],Rphiz[:,1],Rphiz[:,2])
+    
+def set_prog_potential(chain_ind):
+    '''
+    potname either MWPotential2014
+    or index of chain from the param_file
+    '''
+    _REFV0= MWPotential2014Likelihood._REFV0
+            
+    paramf=np.genfromtxt('rperi_grid_select.dat',delimiter=',') 
+            
+    pind=paramf[chain_ind][0]
 
-def add_MCs(Mmin=10**6.,rand_rotate=False,vo=vo,ro=ro):
+    peri=round(paramf[chain_ind][1],2)
+    print (peri)
+
+    flat_c=paramf[chain_ind][2]
+    vc=paramf[chain_ind][3]
+    tvo= vc*_REFV0
+    sigv=paramf[chain_ind][4]
+    prog=list(paramf[chain_ind][5:]) 
+
+    #indices greater than 14: subtract 1
+    if pind > 14 :
+        pind -=1
+
+    pind=int(pind)   
+    potparams_file=np.loadtxt('pot_params.dat',delimiter=',')
+    potparams=list(potparams_file[pind])
+    
+    pot= MWPotential2014Likelihood.setup_potential(potparams,flat_c,False,False,pal5_util_MWfit._REFR0,tvo)
+    
+    return (prog,pot,sigv)
+    
+    
+def make_nondefault_pal5stream(chain_ind,leading=False,timpact=None,b=0.8,hernquist=False, td=5.,
+                    length_factor=1.,**kwargs):
+        
+        
+        orb,pot,sigv=set_prog_potential(chain_ind)
+        
+        
+        try :
+            sdf= pal5_util.setup_pal5model(timpact=timpact,pot=pot,orb=orb,hernquist=hernquist,leading=leading)
+            
+        except numpy.linalg.LinAlgError:
+            
+            sdf = pal5_util_MWfit.setup_sdf(pot,orb,sigv,td,ro=8.,vo=220.,nTrackChunks=11,isob=None,trailing_only=True,verbose=True,useTM=False)[0]
+            
+            
+        return sdf
+            
+            
+                    
+    
+    
+    
+    
+    
+   
+
+def add_MCs(pot=MWPotential2014,Mmin=10**6.,rand_rotate=False,vo=vo,ro=ro):
     
     '''
     Setup Molecular clouds and return their
@@ -95,13 +159,16 @@ def add_MCs(Mmin=10**6.,rand_rotate=False,vo=vo,ro=ro):
     R=np.array(R)
     phi=np.array(phi)
     
+    print ("WARNING: using the same random seed")
+    np.random.seed(10500)
+    
     if rand_rotate :
         phi+=2*np.pi*np.random.uniform(low=0.,high=1.,size=len(phi))
     
     vT=np.empty(len(M))
 
     for ii in range(len(M)):
-        vT[ii]=vcirc(MWPotential2014,R[ii])
+        vT[ii]=vcirc(pot,R[ii])
         
     vR=np.zeros(len(M))
     vz=np.zeros(len(M))
@@ -199,7 +266,7 @@ def aparxv_stream(sdf_smooth,sdf_pepper):
     return (apar_full,x_full,y_full,z_full,vx_full,vy_full,vz_full)
     
 
-def aparxv_stream_from_pkl(sampling=256,nchunks=16):
+def aparxv_stream_from_pkl(pot=MWPotential2014,sampling=256,nchunks=16):
     
     '''
     compute apar,x,v from one or multiple pickle files
@@ -214,12 +281,12 @@ def aparxv_stream_from_pkl(sampling=256,nchunks=16):
     vz_stream=[]
     timpact=[]
     
-    sdf_smooth= pal5_util.setup_pal5model()
+    sdf_smooth= pal5_util.setup_pal5model(pot=pot)
     
     if nchunks > 1 :
         
         for i in range(nchunks):
-            with open('pkl_files/pal5pepper_{}sampling_MW2014_{}.pkl'.format(sampling,i),'rb') as savefile:
+            with open('pkl_files/pal5pepper_{}sampling_pot19_peri5.54_{}.pkl'.format(sampling,i),'rb') as savefile:
                     
                     print (sampling,i)
 
@@ -253,7 +320,7 @@ def aparxv_stream_from_pkl(sampling=256,nchunks=16):
     return (timpact,apar,x_stream,y_stream,z_stream,vx_stream,vy_stream,vz_stream)
     
     
-def compute_impact_parameters(timp,a,xs,ys,zs,nchunks=16,sampling_low=128,imp_fac=5.,Mmin=10**6.,rand_rotate=False):
+def compute_impact_parameters(timp,a,xs,ys,zs,pot=MWPotential2014,nchunks=16,sampling_low=128,imp_fac=5.,Mmin=10**6.,rand_rotate=False):
     
     '''
     timp : timpacts
@@ -266,7 +333,7 @@ def compute_impact_parameters(timp,a,xs,ys,zs,nchunks=16,sampling_low=128,imp_fa
     '''
        
     #load the GMCs
-    M,rs,coord=add_MCs(Mmin=Mmin,rand_rotate=rand_rotate)
+    M,rs,coord=add_MCs(pot=pot,Mmin=Mmin,rand_rotate=rand_rotate)
 
     #integrate their orbits 5 Gyr back,
     t_age= np.linspace(0.,5.,1001)/bovy_conversion.time_in_Gyr(vo,ro)
@@ -278,7 +345,7 @@ def compute_impact_parameters(timp,a,xs,ys,zs,nchunks=16,sampling_low=128,imp_fa
     for ii in range(N):
     
         orbits.append(Orbit(coord[ii]).flip()) # flip flips the velocities for backwards integration
-        orbits[ii].integrate(t_age,MWPotential2014)
+        orbits[ii].integrate(t_age,pot)
         
     min_sep_matrix=np.empty([N,len(timp)])
     apar_matrix=np.empty([N,len(timp)])
@@ -307,7 +374,8 @@ def compute_impact_parameters(timp,a,xs,ys,zs,nchunks=16,sampling_low=128,imp_fa
     impactMC_ind=[]
 
     if nchunks > 1 :
-        with open('pkl_files/pal5pepper_{}sampling_MW2014.pkl'.format(sampling_low),'rb') as savefile:
+        #just to get timpacts
+        with open('pkl_files/pal5pepper_{}sampling_Plummer_MW2014.pkl'.format(sampling_low),'rb') as savefile:
             sdf_pepper_low= pickle.load(savefile,encoding='latin1')
                 
         timpact_low=sdf_pepper_low._timpact
@@ -378,3 +446,5 @@ def compute_impact_parameters(timp,a,xs,ys,zs,nchunks=16,sampling_low=128,imp_fa
         
     
     return (impactMC_ind,M_mc,rs_mc,v_mc,impactb,impact_angle,tmin)
+    
+    
