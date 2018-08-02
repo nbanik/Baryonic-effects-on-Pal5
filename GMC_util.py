@@ -12,6 +12,7 @@ from galpy.orbit import Orbit
 import pal5_util
 import pal5_util_MWfit
 import MWPotential2014Likelihood
+from MWPotential2014Likelihood import _REFR0, _REFV0
 
 ro=8.
 #paper on MC used R0=8.5 kpc, using ro=8. as of now.
@@ -55,7 +56,7 @@ def set_prog_potential(chain_ind):
     
     return (prog,pot,sigv)
     
-    
+   
 def make_nondefault_pal5stream(chain_ind,leading=False,timpact=None,b=0.8,hernquist=False, td=5.,
                     length_factor=1.,**kwargs):
         
@@ -64,23 +65,28 @@ def make_nondefault_pal5stream(chain_ind,leading=False,timpact=None,b=0.8,hernqu
         
         
         try :
-            sdf= pal5_util.setup_pal5model(timpact=timpact,pot=pot,orb=orb,hernquist=hernquist,leading=leading)
+            sdf= pal5_util.setup_pal5model_MWfit(timpact=timpact,pot=pot,orb=orb,hernquist=hernquist,leading=leading,age=td,sigv=sigv)
             
         except numpy.linalg.LinAlgError:
             
-            sdf = pal5_util_MWfit.setup_sdf(pot,orb,sigv,td,ro=8.,vo=220.,nTrackChunks=11,isob=None,trailing_only=True,verbose=True,useTM=False)[0]
+            print ("using estimateBIsochrone")
+            ts= numpy.linspace(0.,td,1001)/bovy_conversion.time_in_Gyr(vo,ro)
+            prog = Orbit(orb,radec=True,ro=ro,vo=vo,solarmotion=[-11.1,24.,7.25])
+            prog.integrate(ts,pot)
+            estb= estimateBIsochrone(pot,prog.R(ts,use_physical=False),
+                                    prog.z(ts,use_physical=False),
+                                    phi=prog.phi(ts,use_physical=False))
+        
+            if estb[1] < 0.3: isob= 0.3
+            elif estb[1] > 1.5: isob= 1.5
+            else: isob= estb[1]
             
+            print ("b=%f"%isob)
             
+            sdf=pal5_util.setup_pal5model_MWfit(leading=leading,pot=pot,orb=orb,timpact=timpact,b=isob,hernquist=hernquist,age=td,sigv=sigv)
+                       
         return sdf
             
-            
-                    
-    
-    
-    
-    
-    
-   
 
 def add_MCs(pot=MWPotential2014,Mmin=10**6.,rand_rotate=False,vo=vo,ro=ro):
     
