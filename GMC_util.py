@@ -14,9 +14,6 @@ import pal5_util_MWfit
 import MWPotential2014Likelihood
 from MWPotential2014Likelihood import _REFR0, _REFV0
 
-ro=8.
-#paper on MC used R0=8.5 kpc, using ro=8. as of now.
-vo=220.
 
 def lbd_to_galcencyl(l,b,d,degree=True):
     xyz=bovy_coords.lbd_to_XYZ(l,b,d,degree=degree)
@@ -54,24 +51,25 @@ def set_prog_potential(chain_ind):
     
     pot= MWPotential2014Likelihood.setup_potential(potparams,flat_c,False,False,pal5_util_MWfit._REFR0,tvo)
     
-    return (prog,pot,sigv)
+    return (prog,pot,sigv,tvo)
     
    
 def make_nondefault_pal5stream(chain_ind,leading=False,timpact=None,b=0.8,hernquist=False, td=5.,
                     length_factor=1.,**kwargs):
         
         
-        orb,pot,sigv=set_prog_potential(chain_ind)
+        orb,pot,sigv,tvo=set_prog_potential(chain_ind)
+        
         
         
         try :
-            sdf= pal5_util.setup_pal5model_MWfit(timpact=timpact,pot=pot,orb=orb,hernquist=hernquist,leading=leading,age=td,sigv=sigv)
+            sdf= pal5_util.setup_pal5model_MWfit(ro=_REFR0,vo=tvo,timpact=timpact,pot=pot,orb=orb,hernquist=hernquist,leading=leading,age=td,sigv=sigv)
             
         except numpy.linalg.LinAlgError:
             
             print ("using estimateBIsochrone")
-            ts= numpy.linspace(0.,td,1001)/bovy_conversion.time_in_Gyr(vo,ro)
-            prog = Orbit(orb,radec=True,ro=ro,vo=vo,solarmotion=[-11.1,24.,7.25])
+            ts= numpy.linspace(0.,td,1001)/bovy_conversion.time_in_Gyr(_REFV0, _REFR0)
+            prog = Orbit(orb,radec=True,ro=_REFR0,vo=tvo,solarmotion=[-11.1,24.,7.25])
             prog.integrate(ts,pot)
             estb= estimateBIsochrone(pot,prog.R(ts,use_physical=False),
                                     prog.z(ts,use_physical=False),
@@ -83,12 +81,12 @@ def make_nondefault_pal5stream(chain_ind,leading=False,timpact=None,b=0.8,hernqu
             
             print ("b=%f"%isob)
             
-            sdf=pal5_util.setup_pal5model_MWfit(leading=leading,pot=pot,orb=orb,timpact=timpact,b=isob,hernquist=hernquist,age=td,sigv=sigv)
+            sdf=pal5_util.setup_pal5model_MWfit(ro=_REFR0,vo=tvo,leading=leading,pot=pot,orb=orb,timpact=timpact,b=isob,hernquist=hernquist,age=td,sigv=sigv)
                        
         return sdf
             
 
-def add_MCs(pot=MWPotential2014,Mmin=10**6.,rand_rotate=False,vo=vo,ro=ro):
+def add_MCs(pot=MWPotential2014,Mmin=10**6.,rand_rotate=False,vo=_REFV0,ro=_REFR0):
     
     '''
     Setup Molecular clouds and return their

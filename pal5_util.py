@@ -72,43 +72,43 @@ def setup_pal5model(leading=False,pot=MWPotential2014,orb=[229.018,-0.124,23.2,-
     return sdf
     
     
-def setup_pal5model_MWfit(leading=False,pot=MWPotential2014,orb=[229.018,-0.124,23.2,-2.296,-2.257,-58.7],
+def setup_pal5model_MWfit(ro,vo,leading=False,pot=MWPotential2014,orb=[229.018,-0.124,23.2,-2.296,-2.257,-58.7],
                     timpact=None,b=0.8,
                     hernquist=True,
                     age=5.,sigv=0.5,
                     singleImpact=False,
                     length_factor=1.,
                     **kwargs):
-    obs= Orbit(orb,radec=True,ro=R0,vo=V0,
+    obs= Orbit(orb,radec=True,ro=ro,vo=vo,
                solarmotion=[-11.1,24.,7.25])
     aAI= actionAngleIsochroneApprox(pot=pot,b=b)
     #sigv= 0.5*(5./age) #km/s, adjust for diff. age
     if timpact is None:
-        sdf= streamdf(sigv/V0,progenitor=obs,
+        sdf= streamdf(sigv/vo,progenitor=obs,
                       pot=pot,aA=aAI,
                       leading=leading,nTrackChunks=11,
-                      tdisrupt=age/bovy_conversion.time_in_Gyr(V0,R0),
-                      Rnorm=R0,Vnorm=V0,R0=R0,
-                      vsun=[-11.1,V0+24.,7.25],
+                      tdisrupt=age/bovy_conversion.time_in_Gyr(vo,ro),
+                      ro=ro,vo=vo,R0=ro,
+                      vsun=[-11.1,vo+24.,7.25],
                       custom_transform=_TPAL5)
     elif singleImpact:
-        sdf= streamgapdf(sigv/V0,progenitor=obs,
+        sdf= streamgapdf(sigv/vo,progenitor=obs,
                          pot=pot,aA=aAI,
                          leading=leading,nTrackChunks=11,
-                         tdisrupt=age/bovy_conversion.time_in_Gyr(V0,R0),
-                         Rnorm=R0,Vnorm=V0,R0=R0,
-                         vsun=[-11.1,V0+24.,7.25],
+                         tdisrupt=age/bovy_conversion.time_in_Gyr(vo,ro),
+                         ro=ro,vo=vo,R0=ro,
+                         vsun=[-11.1,vo+24.,7.25],
                          custom_transform=_TPAL5,
                          timpact=timpact,
                          spline_order=3,
                          hernquist=hernquist,**kwargs)
     else:
-        sdf= streampepperdf(sigv/V0,progenitor=obs,
+        sdf= streampepperdf(sigv/vo,progenitor=obs,
                             pot=pot,aA=aAI,
                             leading=leading,nTrackChunks=101,
-                            tdisrupt=age/bovy_conversion.time_in_Gyr(V0,R0),
-                            Rnorm=R0,Vnorm=V0,R0=R0,
-                            vsun=[-11.1,V0+24.,7.25],
+                            tdisrupt=age/bovy_conversion.time_in_Gyr(vo,ro),
+                            ro=ro,vo=vo,R0=ro,
+                            vsun=[-11.1,vo+24.,7.25],
                             custom_transform=_TPAL5,
                             timpact=timpact,
                             spline_order=1,
