@@ -54,8 +54,7 @@ def set_prog_potential(chain_ind):
     return (prog,pot,sigv,tvo)
     
    
-def make_nondefault_pal5stream(chain_ind,leading=False,timpact=None,b=0.8,hernquist=False, td=5.,
-                    length_factor=1.,**kwargs):
+def make_nondefault_pal5stream(chain_ind,leading=False,timpact=None,b=0.8,hernquist=False,td=5.):
         
         
         orb,pot,sigv,tvo=set_prog_potential(chain_ind)
@@ -324,7 +323,7 @@ def aparxv_stream_from_pkl(pot=MWPotential2014,sampling=256,nchunks=16):
     return (timpact,apar,x_stream,y_stream,z_stream,vx_stream,vy_stream,vz_stream)
     
     
-def compute_impact_parameters(timp,a,xs,ys,zs,pot=MWPotential2014,nchunks=16,sampling_low=128,imp_fac=5.,Mmin=10**6.,rand_rotate=False):
+def compute_impact_parameters_GMC(timp,a,xs,ys,zs,pot=MWPotential2014,nchunks=16,sampling_low=128,imp_fac=5.,Mmin=10**6.,rand_rotate=False):
     
     '''
     timp : timpacts
@@ -340,7 +339,7 @@ def compute_impact_parameters(timp,a,xs,ys,zs,pot=MWPotential2014,nchunks=16,sam
     M,rs,coord=add_MCs(pot=pot,Mmin=Mmin,rand_rotate=rand_rotate)
 
     #integrate their orbits 5 Gyr back,
-    t_age= np.linspace(0.,5.,1001)/bovy_conversion.time_in_Gyr(vo,ro)
+    t_age= np.linspace(0.,5.,1001)/bovy_conversion.time_in_Gyr(_REFV0,_REFR0)
 
     orbits=[]
 
@@ -387,7 +386,7 @@ def compute_impact_parameters(timp,a,xs,ys,zs,pot=MWPotential2014,nchunks=16,sam
         c=0
         for ii in range(len(orbits)):
 
-            bmax=imp_fac*rs[ii]/ro
+            bmax=imp_fac*rs[ii]/_REFR0
 
             if min(min_sep_matrix[ii]) <= bmax :
                 c+=1
@@ -405,8 +404,8 @@ def compute_impact_parameters(timp,a,xs,ys,zs,pot=MWPotential2014,nchunks=16,sam
                 impactb.append(min_sep_matrix[ii,min_timpact_ind])
                 impact_angle.append(apar_matrix[ii,min_timpact_ind]) # _sigMeanSign = -/+ = trail/lead
 
-                rs_mc.append(rs[ii]/ro)
-                M_mc.append(M[ii]/bovy_conversion.mass_in_msol(vo,ro))
+                rs_mc.append(rs[ii]/_REFR0)
+                M_mc.append(M[ii]/bovy_conversion.mass_in_msol(_REFV0,_REFR0))
                 #flip velocities
                 vx_mc.append(-orbits[ii].vx(t_high))
                 vy_mc.append(-orbits[ii].vy(t_high))
@@ -421,7 +420,7 @@ def compute_impact_parameters(timp,a,xs,ys,zs,pot=MWPotential2014,nchunks=16,sam
         c=0
         for ii in range(len(orbits)):
 
-            bmax=imp_fac*rs[ii]/ro
+            bmax=imp_fac*rs[ii]/_REFR0
 
             if min(min_sep_matrix[ii]) <= bmax :
                 c+=1
@@ -436,8 +435,8 @@ def compute_impact_parameters(timp,a,xs,ys,zs,pot=MWPotential2014,nchunks=16,sam
                 impactb.append(min_sep_matrix[ii,min_timpact_ind])
                 impact_angle.append(apar_matrix[ii,min_timpact_ind]) # _sigMeanSign = -/+ = trail/lead
 
-                rs_mc.append(rs[ii]/ro)
-                M_mc.append(M[ii]/bovy_conversion.mass_in_msol(vo,ro))
+                rs_mc.append(rs[ii]/_REFR0)
+                M_mc.append(M[ii]/bovy_conversion.mass_in_msol(_REFV0,_REFR0))
                 #flip velocities
                 vx_mc.append(-orbits[ii].vx(t_imp_min))
                 vy_mc.append(-orbits[ii].vy(t_imp_min))
