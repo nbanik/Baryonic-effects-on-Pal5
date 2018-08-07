@@ -35,43 +35,17 @@ def get_options():
 parser= get_options()
 options,args= parser.parse_args()
 
-##########setup Pal5 orbit and potential
-paramf=np.genfromtxt(options.param_file,delimiter=',')  
+sample_low='pkl_files/pal5pepper_Plummer_128sampling_chainind{}.pkl'.format(options.ind)
 
-pind=paramf[options.ind][0]
-
-peri=round(paramf[options.ind][1],2)
-print (peri)
-
-
-flat_c=paramf[options.ind][2]
-vc=paramf[options.ind][3]
-tvo= vc*_REFV0
-
-#indices greater than 14: subtract 1
-if pind > 14 :
-    pind -=1
-    
-pind=int(pind)   
-potparams_file=np.loadtxt('pot_params.dat',delimiter=',')
-potparams=list(potparams_file[pind])
-   
-pot= MWPotential2014Likelihood.setup_potential(potparams,flat_c,False,False,
-                                                       pal5_util_MWfit._REFR0,tvo)
-
-
-timpact,apar,x_stream,y_stream,z_stream,_,_,_=GMC_util.aparxv_stream_from_pkl(pot=pot,sampling=4096,nchunks=64)
-
-impactMC_ind,M_mc,rs_mc,v_mc,impactb,impact_angle,tmin=GMC_util.compute_impact_parameters(timpact,apar,x_stream,y_stream,z_stream,pot=pot,nchunks=64,sampling_low=128,imp_fac=5.,Mmin=10**5.,rand_rotate=True)
+timpact,apar,x_stream,y_stream,z_stream,vx_stream,vy_stream,vz_stream=GMC_util.aparxv_stream_from_multiple_pkl(pot=options.ind,sampling=4096,npart=64)
+impactMC_ind,M_mc,rs_mc,v_mc,impactb,impact_angle,tmin=GMC_util.compute_impact_parameters_GMC(timpact,apar,x_stream,y_stream,z_stream,pot=options.ind,sampling_low_file=sample_low,Mmin=10**5.)
 
 #load the lower timpact pkl file
-with open('pkl_files/pal5pepper_Plummer_128sampling_pot{}_peri{}.pkl'.format(pind,peri),'rb') as savefile:
-            sdf_pepper= pickle.load(savefile,encoding='latin1')
+with open(sample_low,'rb') as savefile:
+        sdf_pepper= pickle.load(savefile,encoding='latin1')
         
-sdf_smooth= pal5_util.setup_pal5model(pot=pot)
-
 sdf_pepper.set_impacts(impactb=impactb,subhalovel=v_mc,impact_angle=impact_angle,timpact=tmin,rs=rs_mc,GM=M_mc)
 
-pepperfilename='Pal5_4096_on_128impact_Plummer_pot{}_peri{}_Mmin105_MC_rand_rotate_{}.pkl'.format(pind,peri)
+pepperfilename='Pal5_4096_on_128impact_Plummer_Mmin105_chainind_{}.pkl'.format(options.ind)
 
 save_pickles(pepperfilename,sdf_pepper)
