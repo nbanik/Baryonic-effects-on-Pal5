@@ -122,15 +122,21 @@ class streamspraydf(df):
         try:
             rtides= rtide(self._pot,Rpt,Zpt,phi=phipt,
                           t=-dt,M=self._progenitor_mass,use_physical=False)
-        except: # Deal with potential for which we can't evaluate rtide with arrays when the time comes
-            raise
+            vcs= numpy.sqrt(-Rpt
+                            *evaluateRforces(self._pot,Rpt,Zpt,phi=phipt,t=-dt,
+                                             use_physical=False))
+        except ValueError:
+            rtides= numpy.array([rtide(self._pot,Rpt[ii],Zpt[ii],phi=phipt[ii],
+                                  t=-dt[ii],M=self._progenitor_mass,use_physical=False)
+                                for ii in range(len(Rpt))])
+            vcs= numpy.array([numpy.sqrt(-Rpt[ii]
+                                *evaluateRforces(self._pot,Rpt[ii],Zpt[ii],phi=phipt[ii],t=-dt[ii],
+                                                 use_physical=False))
+                              for ii in range(len(Rpt))])
         rtides_as_frac= rtides/Rpt
         RpZst= numpy.array([Rpt+k[:,0]*rtides,
                             phipt+k[:,5]*rtides_as_frac,
                             k[:,3]*rtides_as_frac]).T
-        vcs= numpy.sqrt(-Rpt
-                        *evaluateRforces(self._pot,Rpt,Zpt,phi=phipt,t=-dt,
-                                         use_physical=False))
         vRTZst= numpy.array([vRpt*(1.+k[:,1]),
                              vTpt+k[:,2]*vcs*rtides_as_frac,
                              k[:,4]*vcs*rtides_as_frac]).T
