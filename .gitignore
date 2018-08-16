@@ -2,3 +2,11 @@ plots/
 molecular_clouds/
 globular_clusters/
 sbatch/
+plots/power_MC_Pal5.pdf
+globular_clusters/catalogue.txt
+globular_clusters/globclusttab_modified.csv
+globular_clusters/catalogue.txt
+.ipynb_checkpoints/molecular_clouds-checkpoint (DESKTOP-PMT11JF's conflicted copy 2018-07-19).ipynb
+.ipynb_checkpoints/
+_pycache_/
+
