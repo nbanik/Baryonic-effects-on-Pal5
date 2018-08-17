@@ -135,6 +135,13 @@ def MWPotentialSCFbar(mbar,Acos,Asin,rs=1.,normalize=False,pat_speed=40.,fin_phi
     omegaP=pat_speed*(ro/vo)
     
     fin_phi= np.radians(fin_phi_deg)
+    
+    t_stream_age=t_stream_age/bovy_conversion.time_in_Gyr(vo,ro)
+    
+    Tbar=2.*np.pi/omegaP #bar period in galpy units.
+    t_on=t_on/bovy_conversion.time_in_Gyr(vo,ro)
+    tsteady=tgrow*Tbar
+    tform = t_on + tsteady
         
     init_phi= fin_phi - omegaP*t_stream_age/bovy_conversion.time_in_Gyr(vo,ro)
     
@@ -164,12 +171,7 @@ def MWPotentialSCFbar(mbar,Acos,Asin,rs=1.,normalize=False,pat_speed=40.,fin_phi
     
     #setup Dehnen smooth growth wrapper for the bar
     #convert to galpy units
-    t_stream_age=t_stream_age/bovy_conversion.time_in_Gyr(vo,ro)
     
-    Tbar=2.*np.pi/omegaP #bar period in galpy units.
-    t_on=t_on/bovy_conversion.time_in_Gyr(vo,ro)
-    tsteady=tgrow*Tbar
-    tform = t_on + tsteady
 
     
     
@@ -191,7 +193,7 @@ def MWPotentialSCFbar(mbar,Acos,Asin,rs=1.,normalize=False,pat_speed=40.,fin_phi
         
         turn_physical_off(growbarpot)
     
-    return (growbarpot,MWP2014SCFnobar)
+        return (growbarpot,MWP2014SCFnobar)
     
 
 def MWPotentialSCFbar_invert(mbar,Acos,Asin,rs=1.,normalize=False,pat_speed=40.,fin_phi_deg=27.,t_stream_age=5.,t_on=2.,tgrow=2):
@@ -374,7 +376,7 @@ class mySCFPotential(SCFPotential):
         dR = 1e-8
         return (self._zforce(R,z,phi,t) - self._zforce(R+dR,z,phi,t))/dR
 
-def Particle_Spray_MWPotentialSCFbar(mbar,Acos,Asin,rs=1.,normalize=False,pat_speed=40.,fin_phi_deg=27.,t_on=-2.,tgrow=2):
+def Particle_Spray_MWPotentialSCFbar(mbar,Acos,Asin,rs=1.,normalize=False,pat_speed=40.,fin_phi_deg=27.,t_on=-2.,tgrow=2,tstream=5.):
     
     '''
     SCFbar starts growing at -x Gyr
@@ -390,9 +392,12 @@ def Particle_Spray_MWPotentialSCFbar(mbar,Acos,Asin,rs=1.,normalize=False,pat_sp
     omegaP=pat_speed*(ro/vo)
     
     fin_phi= np.radians(fin_phi_deg)
-        
-    init_phi= fin_phi - omegaP*np.abs(t_on)/bovy_conversion.time_in_Gyr(vo,ro)
     
+    Tbar=2.*np.pi/omegaP #bar period in galpy units.
+    t_on=t_on/bovy_conversion.time_in_Gyr(vo,ro)
+    tsteady=tgrow*Tbar
+    tform = t_on - tsteady #- because past is negative
+        
     mrat=mbar/10.**10. #10^10 mass of bar used to compute Acos and Asin
     
     static_bar=mySCFPotential(amp=mrat,Acos=Acos,Asin=Asin,a=a,normalize=normalize)
@@ -400,7 +405,7 @@ def Particle_Spray_MWPotentialSCFbar(mbar,Acos,Asin,rs=1.,normalize=False,pat_sp
     #Note only m=0 terms are considered 
     static_axi_bar=mySCFPotential(amp=mrat,Acos=np.atleast_3d(Acos[:,:,0]),a=a)
     
-    barrot=potential.SolidBodyRotationWrapperPotential(pot=static_bar,omega=omegaP,ro=ro,vo=vo,pa=init_phi)
+    barrot=potential.SolidBodyRotationWrapperPotential(pot=static_bar,omega=omegaP,ro=ro,vo=vo,pa=fin_phi)
     
     if mbar <= 5.*10**9. :
         MWP2014SCFbar=[MWPotential2014[0],MiyamotoNagaiPotential(amp=(6.8-mrat)*10.**10*u.Msun,a=3./8.,b=0.28/8.),MWPotential2014[2],barrot]
@@ -417,24 +422,23 @@ def Particle_Spray_MWPotentialSCFbar(mbar,Acos,Asin,rs=1.,normalize=False,pat_sp
         turn_physical_off(MWP2014SCFnobar)
         
     
-    #setup Dehnen smooth growth wrapper for the bar
-    #convert to galpy units
-    #t_stream_age=np.abs(t_stream_age)/bovy_conversion.time_in_Gyr(vo,ro)
+    #if t_on >= t_pal5_age, then Pal 5 sees the bar as always on
+    if np.abs(t_on)*bovy_conversion.time_in_Gyr(vo,ro) >= tstream :
+        return (MWP2014SCFbar,MWP2014SCFnobar)
     
-    Tbar=2.*np.pi/omegaP #bar period in galpy units.
-    t_on=t_on/bovy_conversion.time_in_Gyr(vo,ro)
-    tsteady=tgrow*Tbar
-    tform = t_on - tsteady #- because past is negative
-    #print (tform)
-       
-    MWbar_grow=DehnenWrap(amp=1.,pot=MWP2014SCFbar,tform=tform,tsteady=tsteady)  
-    MWaxibar_destroy=DehnenWrap(amp=-1.,pot=MWP2014SCFnobar,tform=tform,tsteady=tsteady) 
+    elif np.abs(tform)*bovy_conversion.time_in_Gyr(vo,ro) >= tstream:
+        print ("tform > age of Pal 5 stream")
+        
+    elif np.abs(tform)*bovy_conversion.time_in_Gyr(vo,ro) < tstream :
+           
+        MWbar_grow=DehnenWrap(amp=1.,pot=MWP2014SCFbar,tform=tform,tsteady=tsteady)  
+        MWaxibar_destroy=DehnenWrap(amp=-1.,pot=MWP2014SCFnobar,tform=tform,tsteady=tsteady) 
 
-    growbarpot=[MWbar_grow,MWP2014SCFnobar,MWaxibar_destroy]
+        growbarpot=[MWbar_grow,MWP2014SCFnobar,MWaxibar_destroy]
 
-    turn_physical_off(growbarpot)
+        turn_physical_off(growbarpot)
     
-    return (growbarpot,MWP2014SCFnobar)
+        return (growbarpot,MWP2014SCFnobar)
     
 
 
