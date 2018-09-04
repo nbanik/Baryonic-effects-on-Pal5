@@ -125,7 +125,7 @@ class streamspraydf(df):
             vcs= numpy.sqrt(-Rpt
                             *evaluateRforces(self._pot,Rpt,Zpt,phi=phipt,t=-dt,
                                              use_physical=False))
-        except ValueError:
+        except (ValueError,TypeError):
             rtides= numpy.array([rtide(self._pot,Rpt[ii],Zpt[ii],phi=phipt[ii],
                                   t=-dt[ii],M=self._progenitor_mass,use_physical=False)
                                 for ii in range(len(Rpt))])
