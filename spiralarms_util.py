@@ -21,7 +21,7 @@ ro=8.
 vo=220.
 
 
-def spiral_arms_potential(FR_frac=1.,cos=True,N=2,pat_speed=24.5,pitch_angle=9.9,r_ref=8.,Rs=7.,phi0=26.,H=0.3):
+def spiral_arms_potential(FR_frac=1.,t_on=-5.,tgrow=2,tstream=5.,cos=True,N=2,pat_speed=24.5,pitch_angle=9.9,r_ref=8.,Rs=7.,phi0=26.,H=0.3):
     
     
         phi0=np.radians(phi0)
@@ -64,37 +64,55 @@ def spiral_arms_potential(FR_frac=1.,cos=True,N=2,pat_speed=24.5,pitch_angle=9.9
         
         #setup spiral potential with correct amplitude
         spiralpot=SpiralArmsPotential(amp=amp,N=N,omega=omega,alpha=alpha,phi_ref=phi0,r_ref=r_ref,H=H,Rs=Rs,Cs=Cs)
-        turn_physical_off(spiralpot)
         
-        MWspiralpot = MWPotential2014 + [spiralpot]
+        #grow the spirals
         
-        return MWspiralpot
+        Tspiral=2.*np.pi/np.abs(omega) #bar period in galpy units.
+        t_on=t_on/bovy_conversion.time_in_Gyr(vo,ro)
+        tsteady=tgrow*Tspiral
+        tform = t_on - tsteady #- because past is negative
+        
+        #if t_on >= t_pal5_age, then Pal 5 sees the spirals always on
+        if np.abs(t_on)*bovy_conversion.time_in_Gyr(vo,ro) >= tstream :
+            MWspiralpot = MWPotential2014 + [spiralpot]
+            turn_physical_off(MWspiralpot)
+            
+            return (MWspiralpot)
 
+        elif np.abs(tform)*bovy_conversion.time_in_Gyr(vo,ro) >= tstream:
+            print ("tform > age of Pal 5 stream")
 
-def sample_streamdf_pal5_noprog_spiral(N,spiralpot,nospiralpot=MWPotential2014,fo='spiral_trailing.dat',trailing=True):
+        elif np.abs(tform)*bovy_conversion.time_in_Gyr(vo,ro) < tstream :
+
+            spiralpot_grow=DehnenWrap(amp=1.,pot=spiralpot,tform=tform,tsteady=tsteady)  
+            turn_physical_off(spiralpot_grow)
+            MWspiralpot = MWPotential2014 + [spiralpot_grow]
+            return MWspiralpot
+
+def sample_streamdf_pal5_noprog_spiral(Nsamples,spiralpot,nospiralpot=MWPotential2014,fo='spiral_trailing.dat',trailing=True):
     
               
         if trailing :
             sdf_trailing= pal5_util.setup_pal5model(pot=nospiralpot)
-            R,vR,vT,z,vz,phi,dt= sdf_trailing.sample(n=N,returndt=True)
+            R,vR,vT,z,vz,phi,dt= sdf_trailing.sample(n=Nsamples,returndt=True)
             fo=open(fo,'w')
           
         
         else :
             sdf_leading= pal5_util.setup_pal5model(pot=nospiralpot,leading=True)
-            R,vR,vT,z,vz,phi,dt= sdf_leading.sample(n=N,returndt=True)
+            R,vR,vT,z,vz,phi,dt= sdf_leading.sample(n=Nsamples,returndt=True)
             fo_lead=fo.replace('trailing','leading')
             fo=open(fo_lead,'w')
               
-        finalR= numpy.empty(N)
-        finalvR=numpy.empty(N)
-        finalvT=numpy.empty(N)
-        finalvz=numpy.empty(N)
-        finalphi= numpy.empty(N)
-        finalz= numpy.empty(N)
-        tt=numpy.empty(N)
+        finalR= numpy.empty(Nsamples)
+        finalvR=numpy.empty(Nsamples)
+        finalvT=numpy.empty(Nsamples)
+        finalvz=numpy.empty(Nsamples)
+        finalphi= numpy.empty(Nsamples)
+        finalz= numpy.empty(Nsamples)
+        tt=numpy.empty(Nsamples)
 
-        for ii in range(N):
+        for ii in range(Nsamples):
 
                 o= Orbit([R[ii],vR[ii],vT[ii],z[ii],vz[ii],phi[ii]])
                 o.turn_physical_off()
@@ -117,8 +135,118 @@ def sample_streamdf_pal5_noprog_spiral(N,spiralpot,nospiralpot=MWPotential2014,f
            
         fo.write("#R   phi   z   vR    vT    vz    ts" + "\n")
     
-        for jj in range(N):
+        for jj in range(Nsamples):
             fo.write(str(finalR[jj]) + "   " + str(finalphi[jj]) + "   " + str(finalz[jj]) + "   " + str(finalvR[jj]) + "   " + str(finalvT[jj]) + "   " + str(finalvz[jj]) + "   " + str(tt[jj]) + "\n")
+        
+        fo.close()
+    
+        return None
+        
+        
+def sample_spraydf_pal5_noprog_spiral(Nsamples,spiralpot,nospiralpot=MWPotential2014,fo='blah_trailing.dat',trailing=True):
+    
+        p5= Orbit([229.018,-0.124,23.2,-2.296,-2.257,-58.7],radec=True,ro=ro,vo=vo,solarmotion=[-11.1,24.,7.25])
+
+        #convert to galpy units
+        pal5=Orbit(p5._orb.vxvv)
+
+        if trailing :
+            spdft= streamspraydf.streamspraydf(50000.*u.Msun,progenitor=pal5,pot=nospiralpot,leading=False,tdisrupt=5.*u.Gyr)
+            RvR,dt= spdft.sample(n=Nsamples,returndt=True,integrate=False)
+            R=RvR[0]
+            vR=RvR[1]
+            vT=RvR[2]
+            z=RvR[3]
+            vz=RvR[4]
+            phi=RvR[5]
+            
+            fo=open(fo,'w')
+            
+     
+        else :
+            spdf= streamspraydf.streamspraydf(50000.*u.Msun,progenitor=pal5,pot=nospiralpot,tdisrupt=5.*u.Gyr)
+            RvR,dt= spdf.sample(n=Nsamples,returndt=True,integrate=False)
+            R=RvR[0]
+            vR=RvR[1]
+            vT=RvR[2]
+            z=RvR[3]
+            vz=RvR[4]
+            phi=RvR[5]
+            fo_lead=fo.replace('trailing','leading')
+            fo=open(fo_lead,'w')
+              
+        finalR= numpy.empty(Nsamples)
+        finalvR=numpy.empty(Nsamples)
+        finalvT=numpy.empty(Nsamples)
+        finalvz=numpy.empty(Nsamples)
+        finalphi= numpy.empty(Nsamples)
+        finalz= numpy.empty(Nsamples)
+        tt=numpy.empty(Nsamples)
+
+        for ii in range(Nsamples):
+
+                orb= Orbit([R[ii],vR[ii],vT[ii],z[ii],vz[ii],phi[ii]])
+                orb.turn_physical_off()
+                                                           
+                ts_future= numpy.linspace(-dt[ii],0.,1001)
+                #forward integrate in barred potential
+                orb.integrate(ts_future,spiralpot)
+                finalR[ii]= orb.R(ts_future[-1])
+                finalphi[ii]= orb.phi(ts_future[-1])
+                finalz[ii]= orb.z(ts_future[-1])
+                finalvR[ii]=orb.vR(ts_future[-1])
+                finalvT[ii]=orb.vT(ts_future[-1])
+                finalvz[ii]=orb.vz(ts_future[-1])
+                tt[ii]=dt[ii]
+                
+        fo.write("#R   phi   z   vR    vT    vz    ts" + "\n")
+    
+        for jj in range(Nsamples):
+            fo.write(str(finalR[jj]) + "   " + str(finalphi[jj]) + "   " + str(finalz[jj]) + "   " + str(finalvR[jj]) + "   " + str(finalvT[jj]) + "   " + str(finalvz[jj]) + "   " + str(tt[jj]) + "\n")
+        
+        fo.close()
+    
+        return None
+        
+        
+        
+def sample_spraydf_pal5_spiral(Nsamples,spiralpot,fo='blah_trailing.dat',trailing=True):
+    
+        p5= Orbit([229.018,-0.124,23.2,-2.296,-2.257,-58.7],radec=True,ro=ro,vo=vo,solarmotion=[-11.1,24.,7.25])
+
+        #convert to galpy units
+        pal5=Orbit(p5._orb.vxvv)
+
+        if trailing :
+            spdft= streamspraydf.streamspraydf(50000.*u.Msun,progenitor=pal5,pot=spiralpot,leading=False,tdisrupt=5.*u.Gyr)
+            RvR,dt= spdft.sample(n=Nsamples,returndt=True,integrate=True)
+            R=RvR[0]
+            vR=RvR[1]
+            vT=RvR[2]
+            z=RvR[3]
+            vz=RvR[4]
+            phi=RvR[5]
+            
+            fo=open(fo,'w')
+            
+     
+        else :
+            spdf= streamspraydf.streamspraydf(50000.*u.Msun,progenitor=pal5,pot=spiralpot,tdisrupt=5.*u.Gyr)
+            RvR,dt= spdf.sample(n=Nsamples,returndt=True,integrate=True)
+            R=RvR[0]
+            vR=RvR[1]
+            vT=RvR[2]
+            z=RvR[3]
+            vz=RvR[4]
+            phi=RvR[5]
+            fo_lead=fo.replace('trailing','leading')
+            fo=open(fo_lead,'w')
+              
+                       
+        fo.write("#R   phi   z   vR    vT    vz    ts" + "\n")
+    
+        for jj in range(Nsamples):
+            fo.write(str(R[jj]) + "   " + str(phi[jj]) + "   " + str(z[jj]) + "   " + str(vR[jj]) + "   " + str(vT[jj]) + "   " + str(vz[jj]) + "   " + str(dt[jj]) + "\n")
         
         fo.close()
     
