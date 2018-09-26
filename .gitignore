@@ -12,4 +12,6 @@ Pal5_CDM
 Pal5_CDM_6-9_Plummer
 Pal5_CDM_Plummer
 plots/
+__pycache__
+.ipynb_checkpoints
 
