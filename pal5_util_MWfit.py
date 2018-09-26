@@ -367,20 +367,17 @@ def pal5_lnlike(pos_radec,rvel_ra,
     out[numpy.isnan(out[:,2]),2]= -1000000000000000000.
     return out
 
-def setup_sdf(pot,orb,sigv,td,ro,vo,multi=None,nTrackChunks=8,isob=None,
+def setup_sdf(pot,prog,sigv,td,ro,vo,multi=None,nTrackChunks=8,isob=None,
               trailing_only=False,verbose=True,useTM=True):
     if isob is None:
         # Determine good one
-        #ts= numpy.linspace(0.,150.,1001)
-        ts=numpy.linspace(0.,td,1001)/bovy_conversion.time_in_Gyr(vo,ro)
+        ts= numpy.linspace(0.,150.,1001)
         # Hack!
         epot= copy.deepcopy(pot)
         epot[2]._b= 1.
         epot[2]._b2= 1.
         epot[2]._isNonAxi= False
         epot[2]._aligned= True
-        prog=Orbit(orb,radec=True,ro=_REFR0,vo=_REFV0,
-               solarmotion=[-11.1,24.,7.25])
         prog.integrate(ts,pot)
         estb= estimateBIsochrone(epot,
                                  prog.R(ts,use_physical=False),

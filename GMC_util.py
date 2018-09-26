@@ -10,7 +10,7 @@ from galpy.util import bovy_conversion, bovy_coords, save_pickles, bovy_plot
 from galpy.potential import MWPotential2014, turn_physical_off, vcirc
 import astropy.units as u
 from galpy.orbit import Orbit
-import pal5_util
+import pal5_util_old as pal5_util
 import pal5_util_MWfit
 import MWPotential2014Likelihood
 from MWPotential2014Likelihood import _REFR0, _REFV0
@@ -165,7 +165,7 @@ def add_MCs(pot=MWPotential2014,Mmin=10**6.,rand_rotate=False,ro=_REFR0):
     
     if rand_rotate :
         phi+=2*np.pi*np.random.uniform(low=0.,high=1.,size=len(phi))
-    
+    print (phi)
     vT=np.empty(len(M))
 
     for ii in range(len(M)):
@@ -262,12 +262,14 @@ def aparxv_stream(sdf_smooth,sdf_pepper):
         vx_full.append(np.array(vx))
         vy_full.append(np.array(vy))
         vz_full.append(np.array(vz))
-        apar_full.append(np.array(apar)*sdf_pepper._sigMeanSign) # _sigMeanSign = -/+ = trail/lead
+        
+        #apar_full.append(np.array(apar)*sdf_pepper._sigMeanSign) # _sigMeanSign = -/+ = trail/lead
+        apar_full.append(np.array(apar)*(-1.))
         
     return (apar_full,x_full,y_full,z_full,vx_full,vy_full,vz_full)
     
 
-def aparxv_stream_from_multiple_pkl(pot=MWPotential2014,sampling=4096,npart=64):
+def aparxv_stream_from_multiple_pkl(pot=MWPotential2014,sampling=4096,npart=64,td=5.):
     
     '''
     compute apar,x,v from one or multiple pickle files
@@ -277,8 +279,8 @@ def aparxv_stream_from_multiple_pkl(pot=MWPotential2014,sampling=4096,npart=64):
     if pot != MWPotential2014 :
         chain_ind=int(pot)
         prog,_pot,sigv,tvo=set_prog_potential(chain_ind)
-        sdf_smooth=make_nondefault_pal5stream(chain_ind,leading=False,timpact=None,b=0.8,hernquist=False,td=5.)
-        pkl_file='pkl_files/pal5pepper_Plummer_{}sampling_chainind{}'.format(sampling,chain_ind)
+        sdf_smooth=make_nondefault_pal5stream(chain_ind,leading=False,timpact=None,b=0.8,hernquist=False,td=td)
+        pkl_file='pkl_files/pal5pepper_Plummer_td{}_{}sampling_chainind{}'.format(td,sampling,chain_ind)
         pkl_file=pkl_file + '_{}.pkl'
     else : 
         sdf_smooth= pal5_util.setup_pal5model(pot=pot)
@@ -314,7 +316,7 @@ def aparxv_stream_from_multiple_pkl(pot=MWPotential2014,sampling=4096,npart=64):
     return (timpact,apar,x_stream,y_stream,z_stream,vx_stream,vy_stream,vz_stream)
     
     
-def compute_impact_parameters_GMC(timp,a,xs,ys,zs,pot=MWPotential2014,npart=64,sampling_low_file='',imp_fac=5.,Mmin=10**6.,rand_rotate=False):
+def compute_impact_parameters_GMC(timp,a,xs,ys,zs,pot=MWPotential2014,npart=64,sampling_low_file='',imp_fac=5.,Mmin=10**6.,rand_rotate=False,td=5.):
     
     '''
     timp : timpacts
@@ -329,7 +331,7 @@ def compute_impact_parameters_GMC(timp,a,xs,ys,zs,pot=MWPotential2014,npart=64,s
     if pot != MWPotential2014 :
         chain_ind=int(pot)
         prog,pot,sigv,tvo=set_prog_potential(chain_ind)
-        t_age= np.linspace(0.,5.,1001)/bovy_conversion.time_in_Gyr(tvo,_REFR0)
+        t_age= np.linspace(0.,td,1001)/bovy_conversion.time_in_Gyr(tvo,_REFR0)
         bovy_convert_mass=bovy_conversion.mass_in_msol(tvo,_REFR0)
         
     else : 

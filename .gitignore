@@ -1,4 +1,3 @@
-plots/
 molecular_clouds/
 globular_clusters/
 sbatch/
@@ -9,4 +8,8 @@ globular_clusters/catalogue.txt
 .ipynb_checkpoints/molecular_clouds-checkpoint (DESKTOP-PMT11JF's conflicted copy 2018-07-19).ipynb
 .ipynb_checkpoints/
 __pycache__/
+Pal5_CDM
+Pal5_CDM_6-9_Plummer
+Pal5_CDM_Plummer
+plots/
 

@@ -74,6 +74,7 @@ def spiral_arms_potential(FR_frac=1.,t_on=-5.,tgrow=2,tstream=5.,cos=True,N=2,pa
         
         #if t_on >= t_pal5_age, then Pal 5 sees the spirals always on
         if np.abs(t_on)*bovy_conversion.time_in_Gyr(vo,ro) >= tstream :
+            print ('not growing spiral')
             MWspiralpot = MWPotential2014 + [spiralpot]
             turn_physical_off(MWspiralpot)
             
@@ -83,6 +84,7 @@ def spiral_arms_potential(FR_frac=1.,t_on=-5.,tgrow=2,tstream=5.,cos=True,N=2,pa
             print ("tform > age of Pal 5 stream")
 
         elif np.abs(tform)*bovy_conversion.time_in_Gyr(vo,ro) < tstream :
+            print ('growing spiral')
 
             spiralpot_grow=DehnenWrap(amp=1.,pot=spiralpot,tform=tform,tsteady=tsteady)  
             turn_physical_off(spiralpot_grow)

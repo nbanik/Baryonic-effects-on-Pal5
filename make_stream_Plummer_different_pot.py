@@ -5,6 +5,8 @@ import matplotlib
 matplotlib.use('agg')
 from scipy import interpolate
 from galpy.util import bovy_conversion, bovy_plot, save_pickles
+import gd1_util
+from gd1_util import R0, V0
 import seaborn as sns
 from matplotlib import cm, pyplot
 import simulate_streampepper
@@ -33,9 +35,13 @@ def get_options():
     parser.add_option("-t","--timpacts",dest='timpacts',default=None,
                       help="Impact times in Gyr to consider; should be a comma separated list")
     
-    parser.add_option("--npart",dest='n',default=4,
+    parser.add_option("--chunk_size",dest='chunk_size',default=64,
                       type='int',
-                      help="no of subsets of full timpacts")
+                      help="size of subsets of full timpacts")
+                      
+    parser.add_option("--td",dest='td',default=5.,
+                      type='float',
+                      help="tdisrupt in Gyr")
                       
     parser.add_option("--tind",dest='tind',default=None,
                       type='int',
@@ -51,6 +57,7 @@ options,args= parser.parse_args()
 ########setup timpact chunks
 prog,pot,sigv,tvo=GMC_util.set_prog_potential(options.chain_ind)
 
+print ("td=%.2f"%options.td)
 
 def parse_times(times,age,ro,vo):
     if 'sampling' in times:
@@ -60,25 +67,20 @@ def parse_times(times,age,ro,vo):
     return [float(ti)/bovy_conversion.time_in_Gyr(vo,ro)
             for ti in times.split(',')]
             
-timpacts= parse_times(options.timpacts,5.,ro=_REFR0,vo=tvo)
+timpacts= parse_times(options.timpacts,options.td,ro=_REFR0,vo=tvo)
 
-nchunk= options.n
+size= options.chunk_size
 
-ntim=int(len(timpacts)/nchunk)
-
-tim_array=[]
-
-for ii in range(nchunk):
-    tim_array.append(timpacts[ii*ntim:(ii+1)*ntim])
-    
-timpactn=tim_array[options.tind]
+tarray=[timpacts[i:i+size] for i  in range(0, len(timpacts), size)]
+   
+timpactn=tarray[options.tind]
 
 print (timpactn)
             
 
 #sdf_smooth= pal5_util.setup_pal5model()
-pepperfilename= 'pkl_files/pal5pepper_Plummer_{}sampling_chainind{}_{}.pkl'.format(len(timpacts),options.chain_ind,options.tind)
+pepperfilename= 'pkl_files/pal5pepper_Plummer_td{}_{}sampling_chainind{}_{}.pkl'.format(options.td,len(timpacts),options.chain_ind,options.tind)
 
-sdf_pepper=GMC_util.make_nondefault_pal5stream(options.chain_ind,timpact=timpactn)
+sdf_pepper=GMC_util.make_nondefault_pal5stream(options.chain_ind,timpact=timpactn,td=options.td)
 
 save_pickles(pepperfilename,sdf_pepper)

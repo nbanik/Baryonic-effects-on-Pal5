@@ -3,9 +3,13 @@ from galpy.potential import MWPotential2014
 from galpy.actionAngle import actionAngleIsochroneApprox
 from galpy.orbit import Orbit
 from galpy.df import streamdf, streamgapdf
-from streampepperdf import streampepperdf
+from streampepperdf_new import streampepperdf
+#from streampepperdf import streampepperdf
 from galpy.util import bovy_conversion, bovy_coords
-from gd1_util import R0, V0
+#from gd1_util import R0, V0
+R0=8.
+V0=220.
+
 # Coordinate transformation routines
 _RAPAL5= 229.018/180.*numpy.pi
 _DECPAL5= -0.124/180.*numpy.pi

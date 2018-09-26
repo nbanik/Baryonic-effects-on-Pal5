@@ -1113,4 +1113,3 @@ class streampepperdf(galpy.df_src.streamdf.streamdf):
                 self._sgapdfs[-kk-1]._kick_interpdOpar(dangle_par_at_impact)
             dangle_par_at_impact+= dOpar*(timpact-run_to_timpact)
         return (Om,angle,dt)
-
